@@ -111,7 +111,7 @@ Requirements:
 - Featured state persists in localStorage.
 - The new filter composes with search, tags, collections, and sorting.
 - Delegate state, accessibility, test, and final-quality reviews.
-- Create FEATURE_FEATURED_PHOTOS_TRACKING.md.
+- Create tracking/FEATURE_FEATURED_PHOTOS_TRACKING.md.
 ```
 
 ## Validation

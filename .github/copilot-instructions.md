@@ -28,3 +28,7 @@ This workspace contains **Lumina**, a modern photo gallery publishing platform b
 - **Likes**: Toggle `likedByMe` status and update like count atomically.
 - **Comments**: Include timestamp, author name, and comment text.
 - **Downloads**: Generate dynamic programmatic anchor tags for downloading images without page redirects.
+
+### 5. Tracking Documents
+- Store every tracking artifact in the repository `tracking/` folder; do not create tracking Markdown files at the repository root.
+- Use descriptive uppercase filenames ending in `_TRACKING.md`, such as `tracking/FEATURE_FEATURED_PHOTOS_TRACKING.md`.

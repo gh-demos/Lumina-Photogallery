@@ -37,9 +37,9 @@ Rejected:
 | `app.js` | Enforces the shared URL normalization boundary for persisted and newly uploaded photo records. |
 | `package.json` | Adds the Node built-in test command. |
 | `test/image-url-allowlist.test.js` | Adds allowlist and normalization coverage for approved and rejected URLs. |
-| `SECURITY_IMAGE_URLS_TRACKING.md` | Records the security review, remediation, and known limitation. |
+| `tracking/SECURITY_IMAGE_URLS_TRACKING.md` | Records the security review, remediation, and known limitation. |
 | `.github/agents/gallery-pr-agent.agent.md` | Requires a username-scoped feature branch, commit, remote push, and passed validation before PR creation. |
-| `PR_SECURITY_IMAGE_URLS_TRACKING.md` | Records delivery and draft PR evidence. |
+| `tracking/PR_SECURITY_IMAGE_URLS_TRACKING.md` | Records delivery and draft PR evidence. |
 
 ## Fleet Activity
 
