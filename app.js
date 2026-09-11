@@ -796,7 +796,13 @@ class GalleryApp {
       comments: []
     };
 
-    this.photos.unshift(newPhoto);
+    const normalizedPhoto = this.normalizePhoto(newPhoto);
+    if (!normalizedPhoto) {
+      this.showUploadError("The selected image could not be published.");
+      return;
+    }
+
+    this.photos.unshift(normalizedPhoto);
     this.savePhotos();
     this.uploadForm.reset();
     if (this.passwordInputGroup) this.passwordInputGroup.classList.add("hidden");
@@ -1486,10 +1492,14 @@ class GalleryApp {
   }
 
   isSafeImageUrl(imageUrl) {
-    if (/^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/]+={0,2}$/i.test(imageUrl)) return true;
+    if (/^data:image\/(png|jpeg|webp|gif);base64,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{4})$/i.test(imageUrl)) return true;
     try {
       const url = new URL(imageUrl);
-      return url.protocol === "https:" && url.hostname === "images.unsplash.com";
+      return url.protocol === "https:"
+        && url.hostname === "images.unsplash.com"
+        && !url.username
+        && !url.password
+        && !url.port;
     } catch {
       return false;
     }
@@ -1505,7 +1515,13 @@ class GalleryApp {
   }
 }
 
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { GalleryApp };
+}
+
 // Initialize on DOM Ready
-document.addEventListener("DOMContentLoaded", () => {
-  window.galleryApp = new GalleryApp();
-});
+if (typeof document !== "undefined") {
+  document.addEventListener("DOMContentLoaded", () => {
+    window.galleryApp = new GalleryApp();
+  });
+}
