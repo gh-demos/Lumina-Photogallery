@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "replace_string_in_file|create_file",
+        "description": "Ensure workspace files being edited are within project bounds and valid",
+        "action": "validate_path",
+        "allowedDirectories": ["."]
+      }
+    ]
+  }
+}

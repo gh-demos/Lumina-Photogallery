@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "replace_string_in_file|create_file",
+        "description": "Automatically format and verify code syntax after Copilot edits",
+        "command": "node -c app.js && node -c server.js"
+      }
+    ]
+  }
+}

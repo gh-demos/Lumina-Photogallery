@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lumina - Photo Gallery Publishing Site</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- FontAwesome Icons for clean UI -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Header / Navigation -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <i class="fa-solid fa-camera-retro brand-icon"></i>
+        <span class="brand-name">Lumina</span>
+        <span class="badge">Gallery</span>
+      </div>
+
+      <div class="search-bar-container">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" id="searchInput" aria-label="Search photos, tags, or photographers" placeholder="Search photos, tags, or photographers..." />
+      </div>
+
+      <div class="nav-actions">
+        <button id="openCollectionsBtn" class="btn btn-secondary" aria-label="Manage photo collections">
+          <i class="fa-solid fa-folder-open"></i>
+          <span>Collections</span>
+        </button>
+        <button id="openShareBtn" class="btn btn-secondary" aria-label="Share photo gallery">
+          <i class="fa-solid fa-share-nodes"></i>
+          <span>Share</span>
+        </button>
+        <button id="openUploadBtn" class="btn btn-primary">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span>Upload Photo</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <h1>Discover & Publish Extraordinary Photography</h1>
+      <p>Explore stunning high-resolution photos uploaded by creators worldwide. Like, comment, and download your favorites.</p>
+    </div>
+  </section>
+
+  <!-- Filter & Category Bar -->
+  <div class="filter-container">
+    <div class="categories" id="categoryContainer">
+      <button class="category-chip active" data-category="all" aria-pressed="true">All Photos</button>
+      <button class="category-chip" data-category="Nature" aria-pressed="false">Nature</button>
+      <button class="category-chip" data-category="Architecture" aria-pressed="false">Architecture</button>
+      <button class="category-chip" data-category="Portraits" aria-pressed="false">Portraits</button>
+      <button class="category-chip" data-category="Travel" aria-pressed="false">Travel</button>
+      <button class="category-chip" data-category="Abstract" aria-pressed="false">Abstract</button>
+      <button class="category-chip" data-category="Cars" aria-pressed="false">Cars</button>
+      <button class="category-chip" data-category="bookmarked" aria-pressed="false"><i class="fa-solid fa-bookmark"></i> Saved</button>
+      <button class="category-chip" data-category="recently-viewed" aria-pressed="false"><i class="fa-solid fa-clock-rotate-left"></i> Recently Viewed</button>
+    </div>
+    <div class="city-filters" id="cityFilterContainer" aria-label="Filter photos by city">
+      <!-- Dynamic city filter chips inserted via JS -->
+    </div>
+    <div class="tag-filter hidden" id="tagFilterContainer" aria-live="polite"></div>
+    <div class="collection-filters" id="collectionFilterContainer" aria-label="Filter photos by collection"></div>
+    <div class="sort-selector">
+      <label for="sortSelect"><i class="fa-solid fa-arrow-down-short-wide"></i> Sort:</label>
+      <select id="sortSelect">
+        <option value="newest">Newest First</option>
+        <option value="popular">Most Liked</option>
+        <option value="rating">Highest Rated</option>
+        <option value="views">Most Viewed</option>
+        <option value="comments">Most Commented</option>
+      </select>
+      <span id="recentlyViewedOrderMessage" class="sort-order-message hidden">Recently viewed order</span>
+    </div>
+  </div>
+
+  <!-- Main Photo Grid -->
+  <main class="main-container">
+    <div class="gallery-grid" id="galleryGrid">
+      <!-- Dynamic photo cards inserted via JS -->
+    </div>
+    <div id="noResults" class="no-results hidden">
+      <i class="fa-regular fa-image no-results-icon"></i>
+      <h3>No photos found</h3>
+      <p>Try adjusting your search query, save a photo to your collection, or upload a new photo to get started!</p>
+    </div>
+  </main>
+
+  <!-- Collection Management Modal -->
+  <div class="modal-overlay hidden" id="collectionsModal" role="dialog" aria-modal="true" aria-labelledby="collectionsModalTitle">
+    <div class="modal-content collections-modal-content">
+      <div class="modal-header">
+        <h2 id="collectionsModalTitle"><i class="fa-solid fa-folder-open"></i> Collections</h2>
+        <button class="close-btn" id="closeCollectionsModal" aria-label="Close collections modal">&times;</button>
+      </div>
+      <form id="collectionForm" class="collection-form">
+        <div class="form-group">
+          <label for="collectionNameInput">Collection name *</label>
+          <input type="text" id="collectionNameInput" maxlength="80" required />
+        </div>
+        <div class="form-group">
+          <label for="collectionDescriptionInput">Description</label>
+          <textarea id="collectionDescriptionInput" rows="2" maxlength="240"></textarea>
+        </div>
+        <div class="collection-form-actions">
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Create Collection</button>
+        </div>
+      </form>
+      <p id="collectionStatus" class="collection-status" aria-live="polite"></p>
+      <div id="collectionsList" class="collections-list" aria-label="Saved collections"></div>
+    </div>
+  </div>
+
+  <!-- Share Gallery Modal -->
+  <div class="modal-overlay hidden" id="shareModal" role="dialog" aria-modal="true" aria-labelledby="shareModalTitle">
+    <div class="modal-content share-modal-content">
+      <div class="modal-header">
+        <h2 id="shareModalTitle"><i class="fa-solid fa-share-nodes"></i> Share Gallery</h2>
+        <button class="close-btn" id="closeShareModal" aria-label="Close share modal">&times;</button>
+      </div>
+      <div class="share-modal-body">
+        <p>Share Lumina Photo Gallery with creators and friends:</p>
+        <div class="share-link-input-group">
+          <input type="text" id="shareUrlInput" readonly value="" />
+          <button class="btn btn-primary btn-sm" id="copyShareUrlBtn" aria-label="Copy share link">
+            <i class="fa-solid fa-copy"></i> Copy Link
+          </button>
+        </div>
+        <div id="copySuccessMsg" class="copy-success-msg hidden">
+          <i class="fa-solid fa-circle-check"></i> Link copied to clipboard!
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Protected Photo Unlock Modal -->
+  <div class="modal-overlay hidden" id="unlockModal" role="dialog" aria-modal="true" aria-labelledby="unlockModalTitle">
+    <div class="modal-content unlock-modal-content">
+      <div class="modal-header">
+        <h2 id="unlockModalTitle"><i class="fa-solid fa-lock"></i> Protected Photo</h2>
+        <button class="close-btn" id="closeUnlockModal" aria-label="Close password prompt">&times;</button>
+      </div>
+      <form id="unlockForm" class="unlock-form">
+        <p class="unlock-description">This photo is private and password-protected. Enter the password to view the photo and details.</p>
+        <div class="form-group">
+          <label for="unlockPasswordInput">Access Password *</label>
+          <input type="password" id="unlockPasswordInput" aria-describedby="unlockErrorMsg" placeholder="Enter photo password" required />
+        </div>
+        <div id="unlockErrorMsg" class="unlock-error-msg hidden" role="alert" aria-live="assertive">
+          <i class="fa-solid fa-circle-exclamation"></i> Incorrect password. Please try again.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelUnlockBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="submitUnlockBtn" aria-label="Unlock photo">
+            <i class="fa-solid fa-key"></i> Unlock Photo
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Upload Photo Modal -->
+  <div class="modal-overlay hidden" id="uploadModal" role="dialog" aria-modal="true" aria-labelledby="uploadModalTitle">
+    <div class="modal-content upload-modal-content">
+      <div class="modal-header">
+        <h2 id="uploadModalTitle"><i class="fa-solid fa-cloud-arrow-up"></i> Publish New Photo</h2>
+        <button class="close-btn" id="closeUploadModal" aria-label="Close upload modal">&times;</button>
+      </div>
+      <form id="uploadForm" class="upload-form">
+        <div class="form-group dropzone" id="dropZone">
+          <input type="file" id="photoFileInput" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden-file-input" aria-label="Select a PNG, JPEG, WEBP, or GIF image to upload" aria-describedby="uploadErrorMsg" />
+          <div class="dropzone-content" id="dropZoneContent">
+            <i class="fa-solid fa-images dropzone-icon"></i>
+            <p><strong>Click to browse</strong> or drag & drop image file</p>
+            <span class="file-hint">Supports PNG, JPG, WEBP, GIF (Max 10MB)</span>
+          </div>
+          <div class="image-preview-container hidden" id="imagePreviewContainer">
+            <img id="imagePreview" src="" alt="Preview" />
+            <button type="button" class="btn-remove-preview" id="removePreviewBtn" aria-label="Remove selected image"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+        <p id="uploadErrorMsg" class="upload-error-msg hidden" role="alert"></p>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="photoTitle">Photo Title *</label>
+            <input type="text" id="photoTitle" placeholder="e.g., Sunset over Emerald Lake" required />
+          </div>
+          <div class="form-group">
+            <label for="photoAuthor">Photographer Name *</label>
+            <input type="text" id="photoAuthor" placeholder="e.g., Jane Doe" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="photoCategory">Category *</label>
+            <select id="photoCategory" required>
+              <option value="Nature">Nature</option>
+              <option value="Architecture">Architecture</option>
+              <option value="Portraits">Portraits</option>
+              <option value="Travel">Travel</option>
+              <option value="Abstract">Abstract</option>
+              <option value="Cars">Cars</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="photoTags">Tags (comma separated)</label>
+            <input type="text" id="photoTags" placeholder="e.g., sunset, mountains, serene" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="photoCity">City</label>
+          <input type="text" id="photoCity" placeholder="e.g., Seattle" maxlength="80" />
+        </div>
+
+        <div class="form-group">
+          <label for="photoDescription">Description</label>
+          <textarea id="photoDescription" rows="3" placeholder="Tell the story behind this capture..."></textarea>
+        </div>
+
+        <div class="form-row privacy-form-row">
+          <div class="form-group checkbox-group">
+            <label for="photoIsPrivate" class="checkbox-label">
+              <input type="checkbox" id="photoIsPrivate" />
+              <span><i class="fa-solid fa-lock"></i> Make Private & Password Protect</span>
+            </label>
+          </div>
+          <div class="form-group hidden" id="passwordInputGroup">
+            <label for="photoPassword">Access Password *</label>
+            <input type="password" id="photoPassword" aria-describedby="uploadErrorMsg" placeholder="Set password (e.g., 1234)" />
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelUploadBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Publish Photo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Photo Detail / Lightbox Modal -->
+  <div class="modal-overlay hidden" id="detailModal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+    <div class="modal-content detail-modal-content">
+      <button class="close-btn detail-close-btn" id="closeDetailModal" aria-label="Close photo details">&times;</button>
+      
+      <div class="detail-layout">
+        <!-- Image View Column -->
+        <div class="detail-image-col">
+          <div class="image-wrapper">
+            <img id="detailImg" src="" alt="Full view" />
+          </div>
+        </div>
+
+        <!-- Details & Interactions Column -->
+        <div class="detail-sidebar">
+          <div class="detail-header">
+            <div class="author-info">
+              <div class="author-avatar" id="detailAvatar">JD</div>
+              <div>
+                <h3 id="detailTitle">Photo Title</h3>
+                <p class="author-name">By <span id="detailAuthor">Author</span> • <span id="detailDate">Date</span></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-body">
+            <p id="detailDescription" class="detail-description">Description text...</p>
+            
+            <div class="detail-tags" id="detailTags">
+              <!-- Dynamic tags -->
+            </div>
+            <form id="detailTagForm" class="detail-tag-form">
+              <label class="visually-hidden" for="detailTagInput">Add tags</label>
+              <input type="text" id="detailTagInput" maxlength="160" placeholder="Add tags, separated by commas" />
+              <button type="submit" class="btn btn-secondary btn-sm"><i class="fa-solid fa-plus"></i> Add</button>
+            </form>
+            <p id="detailTagStatus" class="detail-tag-status" aria-live="polite"></p>
+
+            <div class="detail-actions">
+              <button class="btn btn-like" id="detailLikeBtn">
+                <i class="fa-regular fa-heart" id="detailLikeIcon"></i>
+                <span id="detailLikeCount">0</span> Likes
+              </button>
+              
+              <button class="btn btn-download" id="detailDownloadBtn">
+                <i class="fa-solid fa-download"></i> Download
+              </button>
+
+              <button class="btn btn-bookmark" id="detailBookmarkBtn" type="button" aria-label="Bookmark photo" aria-pressed="false" title="Bookmark photo">
+                <i class="fa-regular fa-bookmark" id="detailBookmarkIcon"></i>
+              </button>
+
+              <button class="btn btn-delete" id="detailDeleteBtn" type="button" aria-label="Delete photo" title="Delete photo">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+
+              <div class="detail-views-badge" id="detailViewsBadge" title="Total Views">
+                <i class="fa-regular fa-eye"></i>
+                <span id="detailViewsCount">0</span> Views
+              </div>
+            </div>
+
+            <section class="photo-collections-section" aria-labelledby="photoCollectionsTitle">
+              <h4 id="photoCollectionsTitle"><i class="fa-solid fa-folder-open"></i> Collections</h4>
+              <div id="photoCollectionMemberships" class="photo-collection-memberships"></div>
+              <p id="photoCollectionsEmpty" class="photo-collections-empty hidden">Create a collection to organize this photo.</p>
+            </section>
+
+            <!-- Rating Section -->
+            <div class="rating-section">
+              <div class="rating-info">
+                <span class="rating-score"><i class="fa-solid fa-star" style="color: #f59e0b;"></i> <strong id="detailAvgRating">0.0</strong> / 5</span>
+                <span class="rating-count">(<span id="detailRatingCount">0</span> ratings)</span>
+              </div>
+              <div class="interactive-rating">
+                <span class="rating-label">Rate photo:</span>
+                  <div class="star-picker" id="starPicker" role="group" aria-label="Rate this photo">
+                    <button type="button" class="star-btn" data-rating="1" title="Rate 1 star" aria-label="Rate 1 star" aria-pressed="false"><i class="fa-regular fa-star" aria-hidden="true"></i></button>
+                    <button type="button" class="star-btn" data-rating="2" title="Rate 2 stars" aria-label="Rate 2 stars" aria-pressed="false"><i class="fa-regular fa-star" aria-hidden="true"></i></button>
+                    <button type="button" class="star-btn" data-rating="3" title="Rate 3 stars" aria-label="Rate 3 stars" aria-pressed="false"><i class="fa-regular fa-star" aria-hidden="true"></i></button>
+                    <button type="button" class="star-btn" data-rating="4" title="Rate 4 stars" aria-label="Rate 4 stars" aria-pressed="false"><i class="fa-regular fa-star" aria-hidden="true"></i></button>
+                    <button type="button" class="star-btn" data-rating="5" title="Rate 5 stars" aria-label="Rate 5 stars" aria-pressed="false"><i class="fa-regular fa-star" aria-hidden="true"></i></button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Comments Section -->
+            <div class="comments-section">
+              <h4><i class="fa-regular fa-comments"></i> Comments (<span id="detailCommentCount">0</span>)</h4>
+              
+              <div class="comments-list" id="commentsList">
+                <!-- Dynamic comments -->
+              </div>
+
+              <form id="commentForm" class="comment-form">
+                <input type="text" id="commentAuthorInput" aria-label="Your name" placeholder="Your name" required />
+                <div class="comment-input-row">
+                  <input type="text" id="commentTextInput" aria-label="Add a comment" placeholder="Add a comment..." required />
+                  <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-paper-plane"></i> Post</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2026 Lumina Publishing Gallery. Built for high performance and creative expression.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "replace_string_in_file|create_file",
+        "description": "Block edits to critical server and environment configuration files",
+        "command": "node -e \"if (process.env.COPILOT_TOOL_FILE_PATH && process.env.COPILOT_TOOL_FILE_PATH.includes('server.js')) process.exit(1);\""
+      }
+    ]
+  }
+}
