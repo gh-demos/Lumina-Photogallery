@@ -1075,7 +1075,7 @@ class GalleryApp {
       <article class="photo-card" data-id="${photo.id}">
         <button type="button" class="card-detail-btn" aria-label="View details for ${this.escapeHTML(photo.title)}">
         <div class="card-image-wrapper">
-          <img src="${thumbnailUrl}" alt="${this.escapeHTML(photo.title)}" loading="lazy" class="${isLocked ? 'locked-img' : ''}" />
+          <img src="${this.escapeHTML(thumbnailUrl)}" alt="${this.escapeHTML(photo.title)}" loading="lazy" class="${isLocked ? 'locked-img' : ''}" />
           <span class="card-category-badge">${this.escapeHTML(photo.category)}</span>
           ${photo.city ? `<span class="card-location-badge"><i class="fa-solid fa-location-dot"></i> ${this.escapeHTML(photo.city)}</span>` : ''}
           ${photo.isPrivate ? `<span class="card-lock-badge"><i class="fa-solid fa-lock"></i> Private</span>` : ''}
