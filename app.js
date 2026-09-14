@@ -1072,7 +1072,7 @@ class GalleryApp {
       : photo.imageUrl;
 
     return `
-      <article class="photo-card" data-id="${photo.id}">
+      <article class="photo-card" data-id="${this.escapeHTML(photo.id)}">
         <button type="button" class="card-detail-btn" aria-label="View details for ${this.escapeHTML(photo.title)}">
         <div class="card-image-wrapper">
           <img src="${this.escapeHTML(thumbnailUrl)}" alt="${this.escapeHTML(photo.title)}" loading="lazy" class="${isLocked ? 'locked-img' : ''}" />
