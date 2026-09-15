@@ -149,10 +149,10 @@
         <button class="close-btn" id="closeUnlockModal" aria-label="Close password prompt">&times;</button>
       </div>
       <form id="unlockForm" class="unlock-form">
-        <p class="unlock-description">This photo is private and password-protected. Enter the password to view the photo and details.</p>
+        <p class="unlock-description" id="unlockDescription">This password is a soft lock for organizing content in this browser — it is not real access control or encryption. Enter it to view or download this photo.</p>
         <div class="form-group">
           <label for="unlockPasswordInput">Access Password *</label>
-          <input type="password" id="unlockPasswordInput" aria-describedby="unlockErrorMsg" placeholder="Enter photo password" required />
+          <input type="password" id="unlockPasswordInput" aria-describedby="unlockDescription unlockErrorMsg" placeholder="Enter photo password" required />
         </div>
         <div id="unlockErrorMsg" class="unlock-error-msg hidden" role="alert" aria-live="assertive">
           <i class="fa-solid fa-circle-exclamation"></i> Incorrect password. Please try again.

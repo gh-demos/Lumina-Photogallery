@@ -173,7 +173,6 @@ class GalleryApp {
     this.photos = this.loadPhotos();
     this.collections = this.loadCollections();
     this.recentlyViewed = this.loadRecentlyViewed();
-    this.unlockedPhotoIds = new Set();
     this.currentCategory = "all";
     this.currentCity = "all";
     this.currentTag = null;
@@ -182,6 +181,7 @@ class GalleryApp {
     this.currentSort = "newest";
     this.selectedPhotoId = null;
     this.pendingUnlockPhotoId = null;
+    this.pendingUnlockAction = null;
     this.previewImageDataUrl = null;
     this.selectedUploadFile = null;
     this.lastFocusedElement = null;
@@ -523,7 +523,7 @@ class GalleryApp {
         return;
       }
 
-      if (e.target.closest(".card-detail-btn")) this.openOrPromptUnlock(photoId);
+      if (e.target.closest(".card-detail-btn")) this.openDetailModal(photoId);
     });
 
     // Share Modal Handlers
@@ -575,10 +575,10 @@ class GalleryApp {
 
     // Unlock Modal Handlers
     if (this.closeUnlockModal) {
-      this.closeUnlockModal.addEventListener("click", () => this.hideModal(this.unlockModal));
+      this.closeUnlockModal.addEventListener("click", () => this.dismissUnlockModal());
     }
     if (this.cancelUnlockBtn) {
-      this.cancelUnlockBtn.addEventListener("click", () => this.hideModal(this.unlockModal));
+      this.cancelUnlockBtn.addEventListener("click", () => this.dismissUnlockModal());
     }
 
     if (this.unlockForm) {
@@ -668,7 +668,7 @@ class GalleryApp {
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         if (this.shareModal && !this.shareModal.classList.contains("hidden")) this.hideModal(this.shareModal);
-        if (this.unlockModal && !this.unlockModal.classList.contains("hidden")) this.hideModal(this.unlockModal);
+        if (this.unlockModal && !this.unlockModal.classList.contains("hidden")) this.dismissUnlockModal();
         if (!this.uploadModal.classList.contains("hidden")) this.hideModal(this.uploadModal);
         if (!this.detailModal.classList.contains("hidden")) this.hideModal(this.detailModal);
         if (!this.collectionsModal.classList.contains("hidden")) this.hideModal(this.collectionsModal);
@@ -683,7 +683,12 @@ class GalleryApp {
 
     [this.shareModal, this.unlockModal, this.uploadModal, this.detailModal, this.collectionsModal].filter(Boolean).forEach(modal => {
       modal.addEventListener("click", (e) => {
-        if (e.target === modal) this.hideModal(modal);
+        if (e.target !== modal) return;
+        if (modal === this.unlockModal) {
+          this.dismissUnlockModal();
+        } else {
+          this.hideModal(modal);
+        }
       });
     });
   }
@@ -812,8 +817,9 @@ class GalleryApp {
     this.renderGallery();
   }
 
-  promptUnlock(photoId) {
+  promptUnlock(photoId, action) {
     this.pendingUnlockPhotoId = photoId;
+    this.pendingUnlockAction = action;
     if (this.unlockPasswordInput) this.unlockPasswordInput.value = "";
     if (this.unlockErrorMsg) this.unlockErrorMsg.classList.add("hidden");
     this.showModal(this.unlockModal);
@@ -830,12 +836,19 @@ class GalleryApp {
     const expectedPassword = photo.password;
 
     if (enteredPassword && enteredPassword === expectedPassword) {
-      this.unlockedPhotoIds.add(photo.id);
       this.hideModal(this.unlockModal);
-      const photoToOpen = this.pendingUnlockPhotoId;
+      const photoToActOn = this.pendingUnlockPhotoId;
+      const action = this.pendingUnlockAction;
       this.pendingUnlockPhotoId = null;
-      this.renderGallery();
-      this.openDetailModal(photoToOpen);
+      this.pendingUnlockAction = null;
+
+      if (action === "download") {
+        this.performDownload(photoToActOn);
+      } else if (action === "like") {
+        this.performToggleLike(photoToActOn);
+      } else {
+        this.performOpenDetailModal(photoToActOn);
+      }
     } else {
       if (this.unlockErrorMsg) this.unlockErrorMsg.classList.remove("hidden");
     }
@@ -844,10 +857,16 @@ class GalleryApp {
   toggleLike(photoId) {
     const photo = this.photos.find(p => p.id === photoId);
     if (!photo) return;
-    if (photo.isPrivate && !this.unlockedPhotoIds.has(photo.id)) {
-      this.promptUnlock(photoId);
+    if (photo.isPrivate) {
+      this.promptUnlock(photoId, "like");
       return;
     }
+    this.performToggleLike(photoId);
+  }
+
+  performToggleLike(photoId) {
+    const photo = this.photos.find(p => p.id === photoId);
+    if (!photo) return;
 
     if (photo.likedByMe) {
       photo.likes -= 1;
@@ -896,10 +915,17 @@ class GalleryApp {
     const photo = this.photos.find(p => p.id === photoId);
     if (!photo) return;
 
-    if (photo.isPrivate && !this.unlockedPhotoIds.has(photo.id)) {
-      this.promptUnlock(photoId);
+    if (photo.isPrivate) {
+      this.promptUnlock(photoId, "download");
       return;
     }
+
+    this.performDownload(photoId);
+  }
+
+  performDownload(photoId) {
+    const photo = this.photos.find(p => p.id === photoId);
+    if (!photo) return;
 
     // Create a temporary anchor to trigger file download
     const link = document.createElement("a");
@@ -1066,7 +1092,7 @@ class GalleryApp {
 
   createCardHTML(photo) {
     const isLiked = photo.likedByMe;
-    const isLocked = photo.isPrivate && !this.unlockedPhotoIds.has(photo.id);
+    const isLocked = Boolean(photo.isPrivate);
     const thumbnailUrl = isLocked
       ? "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
       : photo.imageUrl;
@@ -1285,10 +1311,17 @@ class GalleryApp {
   openDetailModal(photoId) {
     const photo = this.photos.find(p => p.id === photoId);
     if (!photo) return;
-    if (photo.isPrivate && !this.unlockedPhotoIds.has(photo.id)) {
-      this.promptUnlock(photoId);
+    if (photo.isPrivate) {
+      this.promptUnlock(photoId, "open");
       return;
     }
+
+    this.performOpenDetailModal(photoId);
+  }
+
+  performOpenDetailModal(photoId) {
+    const photo = this.photos.find(p => p.id === photoId);
+    if (!photo) return;
 
     this.recordRecentlyViewed(photoId);
     // Increment view count upon viewing detail modal
@@ -1299,16 +1332,6 @@ class GalleryApp {
     this.selectedPhotoId = photoId;
     this.updateDetailModalContent(photo);
     this.showModal(this.detailModal);
-  }
-
-  openOrPromptUnlock(photoId) {
-    const photo = this.photos.find(item => item.id === photoId);
-    if (!photo) return;
-    if (photo.isPrivate && !this.unlockedPhotoIds.has(photoId)) {
-      this.promptUnlock(photoId);
-      return;
-    }
-    this.openDetailModal(photoId);
   }
 
   updateDetailModalContent(photo) {
@@ -1397,11 +1420,19 @@ class GalleryApp {
     document.body.style.overflow = "";
     if (modal === this.detailModal) {
       this.selectedPhotoId = null;
+      this.detailImg.src = "";
     }
     if (this.lastFocusedElement instanceof HTMLElement) {
       this.lastFocusedElement.focus();
       this.lastFocusedElement = null;
     }
+  }
+
+  // Dismiss unlock modal without submitting, clearing any pending unlock state
+  dismissUnlockModal() {
+    this.hideModal(this.unlockModal);
+    this.pendingUnlockPhotoId = null;
+    this.pendingUnlockAction = null;
   }
 
   getFocusableElements(container) {
