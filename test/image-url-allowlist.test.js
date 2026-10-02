@@ -2,7 +2,38 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { GalleryApp } = require("../app.js");
 
+class MemoryStorage {
+  constructor() {
+    this.store = new Map();
+  }
+  getItem(key) {
+    return this.store.has(key) ? this.store.get(key) : null;
+  }
+  setItem(key, value) {
+    this.store.set(key, String(value));
+  }
+  clear() {
+    this.store.clear();
+  }
+}
+
+global.localStorage = new MemoryStorage();
+
 const gallery = Object.create(GalleryApp.prototype);
+
+function makePhoto(id, imageUrl) {
+  return {
+    id,
+    title: "Stored Photo",
+    author: "Lumina",
+    category: "Nature",
+    imageUrl
+  };
+}
+
+test.beforeEach(() => {
+  global.localStorage.clear();
+});
 
 test("allows strict raster image data URLs", () => {
   [
@@ -65,4 +96,28 @@ test("normalizePhoto accepts allowlisted Unsplash and PNG data URLs", () => {
     assert.notEqual(normalizedPhoto, null, imageUrl);
     assert.equal(normalizedPhoto.imageUrl, imageUrl, imageUrl);
   });
+});
+
+test("loadPhotos drops malformed and unsafe stored image URLs but preserves valid records", () => {
+  const validDataUrl = "data:image/png;base64,iVBORw0KGgo=";
+  global.localStorage.setItem("lumina_photos", JSON.stringify([
+    makePhoto("unsafe-scheme", "javascript:alert(1)"),
+    makePhoto("host-suffix", "https://images.unsplash.com.evil.example/photo.jpg"),
+    makePhoto("authority-confusion", "https://images.unsplash.com@evil.example/photo.jpg"),
+    makePhoto("bad-data", "data:image/png;base64,not-base64"),
+    makePhoto("non-string", 42),
+    makePhoto("valid-unsplash", "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format"),
+    makePhoto("valid-data", validDataUrl)
+  ]));
+
+  const photos = gallery.loadPhotos();
+
+  assert.deepEqual(photos.map(photo => photo.id), ["valid-unsplash", "valid-data"]);
+  assert.equal(photos[0].imageUrl, "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format");
+  assert.equal(photos[1].imageUrl, validDataUrl);
+  assert.deepEqual(
+    JSON.parse(global.localStorage.getItem("lumina_photos")).map(photo => photo.id),
+    ["valid-unsplash", "valid-data"],
+    "rejected image URLs should not remain in persisted gallery data"
+  );
 });

@@ -2,6 +2,9 @@
  * Lumina Photo Gallery Publishing Site Application Logic
  */
 
+// Maximum accepted length for a posted comment, enforced on submit and on load.
+const MAX_COMMENT_LENGTH = 500;
+
 // Initial Sample Photos Data
 const DEFAULT_PHOTOS = [
   {
@@ -891,7 +894,7 @@ class GalleryApp {
     const author = this.commentAuthorInput.value.trim();
     const text = this.commentTextInput.value.trim();
 
-    if (!author || !text) return;
+    if (!author || !text || text.length > MAX_COMMENT_LENGTH) return;
 
     const photo = this.photos.find(p => p.id === this.selectedPhotoId);
     if (!photo) return;
@@ -976,6 +979,11 @@ class GalleryApp {
   ratePhoto(photoId, score) {
     const photo = this.photos.find(p => p.id === photoId);
     if (!photo) return;
+
+    // A repeated click on the already-selected star is a no-op: applying it
+    // again would not change the average, but skipping it avoids redundant
+    // saves/renders and keeps the sum/count pair from ever drifting apart.
+    if (photo.myRating === score) return;
 
     if (!photo.myRating) {
       photo.ratingSum = (photo.ratingSum || 0) + score;
@@ -1098,7 +1106,7 @@ class GalleryApp {
       : photo.imageUrl;
 
     return `
-      <article class="photo-card" data-id="${photo.id}">
+      <article class="photo-card" data-id="${this.escapeHTML(photo.id)}">
         <button type="button" class="card-detail-btn" aria-label="View details for ${this.escapeHTML(photo.title)}">
         <div class="card-image-wrapper">
           <img src="${this.escapeHTML(thumbnailUrl)}" alt="${this.escapeHTML(photo.title)}" loading="lazy" class="${isLocked ? 'locked-img' : ''}" />
@@ -1482,6 +1490,10 @@ class GalleryApp {
 
     const number = (value, fallback = 0) => Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : fallback;
     const count = value => Math.floor(number(value));
+    const ratingCount = count(photo.ratingCount);
+    // Clamp the rating sum to what the count could plausibly produce so a
+    // tampered/malformed record can't render an out-of-range average.
+    const ratingSum = Math.min(number(photo.ratingSum), ratingCount * 5);
     const isPrivate = Boolean(photo.isPrivate);
     const password = typeof photo.password === "string" ? photo.password.trim() : "";
     if (isPrivate && !password) return null;
@@ -1498,8 +1510,8 @@ class GalleryApp {
       likes: count(photo.likes),
       likedByMe: Boolean(photo.likedByMe),
       views: count(photo.views),
-      ratingSum: number(photo.ratingSum),
-      ratingCount: count(photo.ratingCount),
+      ratingSum,
+      ratingCount,
       myRating: Math.min(5, count(photo.myRating)),
       bookmarkedByMe: Boolean(photo.bookmarkedByMe),
       isPrivate,
@@ -1512,7 +1524,7 @@ class GalleryApp {
   normalizeComment(comment) {
     if (!comment || typeof comment !== "object") return null;
     const author = typeof comment.author === "string" ? comment.author.trim() : "";
-    const text = typeof comment.text === "string" ? comment.text.trim() : "";
+    const text = typeof comment.text === "string" ? comment.text.trim().slice(0, MAX_COMMENT_LENGTH) : "";
     if (!author || !text) return null;
     return {
       id: typeof comment.id === "string" && /^[A-Za-z0-9_-]+$/.test(comment.id) ? comment.id : `comment-${Date.now()}`,
@@ -1547,7 +1559,7 @@ class GalleryApp {
 }
 
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { GalleryApp };
+  module.exports = { GalleryApp, MAX_COMMENT_LENGTH };
 }
 
 // Initialize on DOM Ready
