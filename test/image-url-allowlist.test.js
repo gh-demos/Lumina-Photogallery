@@ -2,7 +2,39 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { GalleryApp } = require("../app.js");
 
+class MemoryStorage {
+  constructor() {
+    this.store = new Map();
+  }
+  getItem(key) {
+    return this.store.has(key) ? this.store.get(key) : null;
+  }
+  setItem(key, value) {
+    this.store.set(key, String(value));
+  }
+  clear() {
+    this.store.clear();
+  }
+}
+
+const storage = new MemoryStorage();
+global.localStorage = storage;
 const gallery = Object.create(GalleryApp.prototype);
+
+function makePhoto(id, imageUrl) {
+  return {
+    id,
+    title: "Stored Photo",
+    author: "Lumina",
+    category: "Nature",
+    imageUrl,
+    comments: []
+  };
+}
+
+test.beforeEach(() => {
+  storage.clear();
+});
 
 test("allows strict raster image data URLs", () => {
   [
@@ -65,4 +97,22 @@ test("normalizePhoto accepts allowlisted Unsplash and PNG data URLs", () => {
     assert.notEqual(normalizedPhoto, null, imageUrl);
     assert.equal(normalizedPhoto.imageUrl, imageUrl, imageUrl);
   });
+});
+
+test("loadPhotos drops malformed and unsafe stored image URLs and persists valid records", () => {
+  const photos = [
+    makePhoto("unsafe-scheme", "javascript:alert(1)"),
+    makePhoto("host-suffix", "https://images.unsplash.com.evil.example/photo.jpg"),
+    makePhoto("host-credentials", "https://images.unsplash.com@evil.example/photo.jpg"),
+    makePhoto("invalid-data", "data:image/png;base64,not-base64"),
+    makePhoto("non-string-url", 42),
+    makePhoto("valid-unsplash", "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format"),
+    makePhoto("valid-data", "data:image/png;base64,iVBORw0KGgo=")
+  ];
+  storage.setItem("lumina_photos", JSON.stringify(photos));
+
+  const loadedPhotos = gallery.loadPhotos();
+
+  assert.deepEqual(loadedPhotos.map(photo => photo.id), ["valid-unsplash", "valid-data"]);
+  assert.deepEqual(JSON.parse(storage.getItem("lumina_photos")), loadedPhotos);
 });

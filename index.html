@@ -53,7 +53,7 @@
 
   <!-- Filter & Category Bar -->
   <div class="filter-container">
-    <div class="categories" id="categoryContainer">
+    <div class="categories" id="categoryContainer" role="group" aria-label="Filter photos by category">
       <button class="category-chip active" data-category="all" aria-pressed="true">All Photos</button>
       <button class="category-chip" data-category="Nature" aria-pressed="false">Nature</button>
       <button class="category-chip" data-category="Architecture" aria-pressed="false">Architecture</button>
@@ -64,11 +64,11 @@
       <button class="category-chip" data-category="bookmarked" aria-pressed="false"><i class="fa-solid fa-bookmark"></i> Saved</button>
       <button class="category-chip" data-category="recently-viewed" aria-pressed="false"><i class="fa-solid fa-clock-rotate-left"></i> Recently Viewed</button>
     </div>
-    <div class="city-filters" id="cityFilterContainer" aria-label="Filter photos by city">
+    <div class="city-filters" id="cityFilterContainer" role="group" aria-label="Filter photos by city">
       <!-- Dynamic city filter chips inserted via JS -->
     </div>
     <div class="tag-filter hidden" id="tagFilterContainer" aria-live="polite"></div>
-    <div class="collection-filters" id="collectionFilterContainer" aria-label="Filter photos by collection"></div>
+    <div class="collection-filters" id="collectionFilterContainer" role="group" aria-label="Filter photos by collection"></div>
     <div class="sort-selector">
       <label for="sortSelect"><i class="fa-solid fa-arrow-down-short-wide"></i> Sort:</label>
       <select id="sortSelect">
@@ -129,7 +129,7 @@
       <div class="share-modal-body">
         <p>Share Lumina Photo Gallery with creators and friends:</p>
         <div class="share-link-input-group">
-          <input type="text" id="shareUrlInput" readonly value="" />
+          <input type="text" id="shareUrlInput" aria-label="Share URL" readonly value="" />
           <button class="btn btn-primary btn-sm" id="copyShareUrlBtn" aria-label="Copy share link">
             <i class="fa-solid fa-copy"></i> Copy Link
           </button>
@@ -344,9 +344,9 @@
               </div>
 
               <form id="commentForm" class="comment-form">
-                <input type="text" id="commentAuthorInput" aria-label="Your name" placeholder="Your name" required />
+                <input type="text" id="commentAuthorInput" aria-label="Your name" maxlength="80" placeholder="Your name" required />
                 <div class="comment-input-row">
-                  <input type="text" id="commentTextInput" aria-label="Add a comment" placeholder="Add a comment..." required />
+                  <input type="text" id="commentTextInput" aria-label="Add a comment" maxlength="500" placeholder="Add a comment..." required />
                   <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-paper-plane"></i> Post</button>
                 </div>
               </form>

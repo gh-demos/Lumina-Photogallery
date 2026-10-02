@@ -2,6 +2,8 @@
  * Lumina Photo Gallery Publishing Site Application Logic
  */
 
+const MAX_COMMENT_LENGTH = 500;
+
 // Initial Sample Photos Data
 const DEFAULT_PHOTOS = [
   {
@@ -891,7 +893,7 @@ class GalleryApp {
     const author = this.commentAuthorInput.value.trim();
     const text = this.commentTextInput.value.trim();
 
-    if (!author || !text) return;
+    if (!author || !text || text.length > MAX_COMMENT_LENGTH) return;
 
     const photo = this.photos.find(p => p.id === this.selectedPhotoId);
     if (!photo) return;
@@ -1482,6 +1484,7 @@ class GalleryApp {
 
     const number = (value, fallback = 0) => Number.isFinite(Number(value)) && Number(value) >= 0 ? Number(value) : fallback;
     const count = value => Math.floor(number(value));
+    const ratingCount = count(photo.ratingCount);
     const isPrivate = Boolean(photo.isPrivate);
     const password = typeof photo.password === "string" ? photo.password.trim() : "";
     if (isPrivate && !password) return null;
@@ -1498,8 +1501,8 @@ class GalleryApp {
       likes: count(photo.likes),
       likedByMe: Boolean(photo.likedByMe),
       views: count(photo.views),
-      ratingSum: number(photo.ratingSum),
-      ratingCount: count(photo.ratingCount),
+      ratingSum: Math.min(number(photo.ratingSum), ratingCount * 5),
+      ratingCount,
       myRating: Math.min(5, count(photo.myRating)),
       bookmarkedByMe: Boolean(photo.bookmarkedByMe),
       isPrivate,
@@ -1517,7 +1520,7 @@ class GalleryApp {
     return {
       id: typeof comment.id === "string" && /^[A-Za-z0-9_-]+$/.test(comment.id) ? comment.id : `comment-${Date.now()}`,
       author,
-      text,
+      text: text.slice(0, MAX_COMMENT_LENGTH),
       createdAt: typeof comment.createdAt === "string" && !Number.isNaN(Date.parse(comment.createdAt)) ? comment.createdAt : new Date().toISOString()
     };
   }
@@ -1547,7 +1550,7 @@ class GalleryApp {
 }
 
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { GalleryApp };
+  module.exports = { GalleryApp, MAX_COMMENT_LENGTH };
 }
 
 // Initialize on DOM Ready
