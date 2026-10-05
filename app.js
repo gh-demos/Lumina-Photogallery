@@ -187,8 +187,38 @@ class GalleryApp {
     this.lastFocusedElement = null;
 
     this.initDOMElements();
+    this.applyTheme(this.loadTheme());
     this.bindEvents();
     this.renderGallery();
+  }
+
+  loadTheme() {
+    try {
+      return localStorage.getItem("lumina_theme") === "light" ? "light" : "dark";
+    } catch (error) {
+      console.warn("Unable to read theme preference:", error);
+      return "dark";
+    }
+  }
+
+  applyTheme(theme) {
+    this.currentTheme = theme;
+    document.documentElement.dataset.theme = theme;
+    const isLight = theme === "light";
+    this.themeToggleBtn.setAttribute("aria-pressed", String(isLight));
+    this.themeToggleBtn.querySelector("span").textContent = isLight ? "Dark mode" : "Light mode";
+    this.themeToggleBtn.querySelector("i").className = isLight ? "fa-solid fa-moon" : "fa-solid fa-sun";
+    this.themeToggleBtn.title = isLight ? "Switch to dark mode" : "Switch to light mode";
+  }
+
+  toggleTheme() {
+    this.applyTheme(this.currentTheme === "dark" ? "light" : "dark");
+    try {
+      localStorage.setItem("lumina_theme", this.currentTheme);
+    } catch (error) {
+      console.error("Unable to save theme preference:", error);
+      alert("Your theme changed, but the preference could not be saved.");
+    }
   }
 
   loadPhotos() {
@@ -338,6 +368,7 @@ class GalleryApp {
   }
 
   initDOMElements() {
+    this.themeToggleBtn = document.getElementById("themeToggleBtn");
     // Nav & Controls
     this.galleryGrid = document.getElementById("galleryGrid");
     this.noResults = document.getElementById("noResults");
@@ -425,6 +456,7 @@ class GalleryApp {
   }
 
   bindEvents() {
+    this.themeToggleBtn.addEventListener("click", () => this.toggleTheme());
     // Search & Filter (Debounced to optimize rendering performance)
     const debouncedSearch = this.debounce((query) => {
       this.searchQuery = query;
@@ -1167,8 +1199,15 @@ class GalleryApp {
       return;
     }
 
+    const collectionIdBase = `collection-${Date.now()}`;
+    let collectionId = collectionIdBase;
+    let suffix = 1;
+    while (this.collections.some(collection => collection.id === collectionId)) {
+      collectionId = `${collectionIdBase}-${suffix++}`;
+    }
+
     this.collections.unshift({
-      id: `collection-${Date.now()}`,
+      id: collectionId,
       name,
       description,
       coverPhotoId: null,
