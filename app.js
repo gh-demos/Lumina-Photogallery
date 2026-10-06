@@ -1016,9 +1016,15 @@ class GalleryApp {
     // Recently viewed is always ordered by its persisted view timestamp.
     if (this.currentCategory === "recently-viewed") {
       const viewedAtByPhotoId = new Map(this.recentlyViewed.map(entry => [entry.photoId, entry.viewedAt]));
-      filtered.sort((a, b) => new Date(viewedAtByPhotoId.get(b.id)) - new Date(viewedAtByPhotoId.get(a.id)) || a.id.localeCompare(b.id));
+      const viewedTimestampByPhotoId = new Map(
+        filtered.map(photo => [photo.id, new Date(viewedAtByPhotoId.get(photo.id)).getTime()])
+      );
+      filtered.sort((a, b) => viewedTimestampByPhotoId.get(b.id) - viewedTimestampByPhotoId.get(a.id) || a.id.localeCompare(b.id));
     } else if (this.currentSort === "newest") {
-      filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const createdTimestampByPhotoId = new Map(
+        filtered.map(photo => [photo.id, new Date(photo.createdAt).getTime()])
+      );
+      filtered.sort((a, b) => createdTimestampByPhotoId.get(b.id) - createdTimestampByPhotoId.get(a.id));
     } else if (this.currentSort === "popular") {
       filtered.sort((a, b) => b.likes - a.likes);
     } else if (this.currentSort === "rating") {
