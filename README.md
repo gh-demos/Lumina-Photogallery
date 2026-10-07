@@ -5,6 +5,7 @@ Lumina is a demo photo gallery publishing application built with vanilla HTML, C
 ## Features
 
 - Browse a responsive gallery of sample photos.
+- Switch between light and dark themes using the header toggle; dark is the default and the preference persists across refreshes.
 - Upload images from the file picker or by drag and drop.
 - Validate uploads as image files no larger than 10 MB.
 - Preview uploads safely before publishing.
@@ -77,6 +78,7 @@ Lumina stores client-side state under these keys:
 | `lumina_photos` | Published photos, likes, comments, ratings, bookmarks, tags, and upload metadata. |
 | `lumina_collections` | Collection names, descriptions, cover-photo IDs, and photo membership. |
 | `lumina_recently_viewed` | Up to 20 unique photo IDs with viewing timestamps. |
+| `lumina_theme` | Selected appearance: `light` or `dark`. |
 
 Stored data is normalized before use. The application validates photo identifiers and image URLs, ignores malformed persisted records, and escapes user-controlled text before dynamic HTML rendering.
 
