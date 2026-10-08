@@ -48,7 +48,6 @@ function setup(t, photos) {
     photos,
     collections: [],
     recentlyViewed: [],
-    unlockedPhotoIds: new Set(),
     currentCategory: "all",
     currentCity: "all",
     currentTag: null,
@@ -79,7 +78,7 @@ function key(document, key, target = new Element(), extra = {}) {
   return event;
 }
 
-test("launch uses composed current filters and sort, skipping locked but including unlocked photos", t => {
+test("launch uses composed current filters and sort, excluding all private photos", t => {
   const { gallery } = setup(t, [
     photo("older"),
     photo("newer", { createdAt: "2026-02-01T00:00:00.000Z" }),
@@ -96,12 +95,11 @@ test("launch uses composed current filters and sort, skipping locked but includi
     searchQuery: "photo", currentCollectionId: "chosen",
     collections: [{ id: "chosen", photoIds: gallery.photos.map(item => item.id).filter(id => id !== "other-collection") }]
   });
-  gallery.unlockedPhotoIds.add("unlocked");
   gallery.openSlideshowBtn.listeners.click();
-  assert.deepEqual(gallery.slideshowPhotoIds, ["newer", "older", "unlocked"]);
+  assert.deepEqual(gallery.slideshowPhotoIds, ["newer", "older"]);
   assert.equal(gallery.slideshowImg.src, gallery.photos[1].imageUrl);
   assert.equal(gallery.slideshowImg.alt, "Photo newer");
-  assert.equal(gallery.slideshowCaption.textContent, "1 of 3: Photo newer by Avery");
+  assert.equal(gallery.slideshowCaption.textContent, "1 of 2: Photo newer by Avery");
   assert.equal(gallery.slideshowTimer, null);
   gallery.currentCategory = "Travel";
   gallery.slideshowNextBtn.listeners.click();

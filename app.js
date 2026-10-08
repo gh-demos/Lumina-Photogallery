@@ -1096,8 +1096,8 @@ class GalleryApp {
     const slideshowCount = this.getSlideshowPhotos(photos).length;
     this.openSlideshowBtn.disabled = slideshowCount === 0;
     this.slideshowAvailability.textContent = slideshowCount
-      ? `${slideshowCount} photos available. Locked photos are excluded.`
-      : "No unlocked photos in the current results.";
+      ? `${slideshowCount} photos available. Private photos are excluded.`
+      : "No public photos in the current results.";
     this.updateSortAvailability();
     this.renderCityFilters();
     this.renderTagFilter();
@@ -1129,7 +1129,7 @@ class GalleryApp {
   }
 
   getSlideshowPhotos(photos = this.getFilteredPhotos()) {
-    return photos.filter(photo => !photo.isPrivate || this.unlockedPhotoIds.has(photo.id));
+    return photos.filter(photo => !photo.isPrivate);
   }
 
   openSlideshow() {
@@ -1143,7 +1143,7 @@ class GalleryApp {
 
   renderSlideshow() {
     const photo = this.photos.find(item => item.id === this.slideshowPhotoIds[this.slideshowIndex]);
-    if (!photo || (photo.isPrivate && !this.unlockedPhotoIds.has(photo.id))) {
+    if (!photo || photo.isPrivate) {
       this.hideModal(this.slideshowModal);
       return;
     }
