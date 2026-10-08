@@ -579,6 +579,52 @@ textarea:focus-visible {
 }
 
 /* Modals */
+.slideshow-launch,
+.slideshow-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.slideshow-launch span,
+#slideshowHelp {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.slideshow-content {
+  max-width: 1000px;
+  padding: 1.5rem;
+}
+
+.slideshow-figure {
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.slideshow-figure img {
+  display: block;
+  width: 100%;
+  height: min(55vh, 600px);
+  object-fit: contain;
+  background: var(--bg-color);
+  border-radius: var(--radius-md);
+}
+
+.slideshow-figure figcaption {
+  margin-top: 0.75rem;
+}
+
+.slideshow-launch button:disabled,
+.slideshow-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;

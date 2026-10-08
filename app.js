@@ -185,6 +185,9 @@ class GalleryApp {
     this.previewImageDataUrl = null;
     this.selectedUploadFile = null;
     this.lastFocusedElement = null;
+    this.slideshowPhotoIds = [];
+    this.slideshowIndex = 0;
+    this.slideshowTimer = null;
 
     this.initDOMElements();
     this.bindEvents();
@@ -348,6 +351,17 @@ class GalleryApp {
     this.collectionFilterContainer = document.getElementById("collectionFilterContainer");
     this.sortSelect = document.getElementById("sortSelect");
     this.recentlyViewedOrderMessage = document.getElementById("recentlyViewedOrderMessage");
+    this.openSlideshowBtn = document.getElementById("openSlideshowBtn");
+    this.slideshowAvailability = document.getElementById("slideshowAvailability");
+    this.slideshowModal = document.getElementById("slideshowModal");
+    this.closeSlideshowBtn = document.getElementById("closeSlideshowBtn");
+    this.slideshowImg = document.getElementById("slideshowImg");
+    this.slideshowCaption = document.getElementById("slideshowCaption");
+    this.slideshowPreviousBtn = document.getElementById("slideshowPreviousBtn");
+    this.slideshowNextBtn = document.getElementById("slideshowNextBtn");
+    this.slideshowPlayPauseBtn = document.getElementById("slideshowPlayPauseBtn");
+    this.slideshowPlayPauseIcon = document.getElementById("slideshowPlayPauseIcon");
+    this.slideshowPlayPauseLabel = document.getElementById("slideshowPlayPauseLabel");
 
     this.openCollectionsBtn = document.getElementById("openCollectionsBtn");
     this.collectionsModal = document.getElementById("collectionsModal");
@@ -425,6 +439,15 @@ class GalleryApp {
   }
 
   bindEvents() {
+    this.openSlideshowBtn.addEventListener("click", () => this.openSlideshow());
+    this.closeSlideshowBtn.addEventListener("click", () => this.hideModal(this.slideshowModal));
+    this.slideshowPreviousBtn.addEventListener("click", () => this.moveSlideshow(-1));
+    this.slideshowNextBtn.addEventListener("click", () => this.moveSlideshow(1));
+    this.slideshowPlayPauseBtn.addEventListener("click", () => this.toggleSlideshowPlayback());
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) this.pauseSlideshow();
+    });
+
     // Search & Filter (Debounced to optimize rendering performance)
     const debouncedSearch = this.debounce((query) => {
       this.searchQuery = query;
@@ -666,7 +689,9 @@ class GalleryApp {
 
     // Keyboard & Overlay Accessibility (Escape key to close active modal)
     document.addEventListener("keydown", (e) => {
+      this.handleSlideshowKeydown(e);
       if (e.key === "Escape") {
+        if (!this.slideshowModal.classList.contains("hidden")) this.hideModal(this.slideshowModal);
         if (this.shareModal && !this.shareModal.classList.contains("hidden")) this.hideModal(this.shareModal);
         if (this.unlockModal && !this.unlockModal.classList.contains("hidden")) this.hideModal(this.unlockModal);
         if (!this.uploadModal.classList.contains("hidden")) this.hideModal(this.uploadModal);
@@ -675,13 +700,13 @@ class GalleryApp {
       }
 
       if (e.key === "Tab") {
-        const activeModal = [this.shareModal, this.unlockModal, this.uploadModal, this.detailModal, this.collectionsModal]
+        const activeModal = [this.slideshowModal, this.shareModal, this.unlockModal, this.uploadModal, this.detailModal, this.collectionsModal]
           .find(modal => modal && !modal.classList.contains("hidden"));
         if (activeModal) this.trapFocus(e, activeModal);
       }
     });
 
-    [this.shareModal, this.unlockModal, this.uploadModal, this.detailModal, this.collectionsModal].filter(Boolean).forEach(modal => {
+    [this.slideshowModal, this.shareModal, this.unlockModal, this.uploadModal, this.detailModal, this.collectionsModal].filter(Boolean).forEach(modal => {
       modal.addEventListener("click", (e) => {
         if (e.target === modal) this.hideModal(modal);
       });
@@ -1040,6 +1065,11 @@ class GalleryApp {
 
   renderGallery() {
     const photos = this.getFilteredPhotos();
+    const slideshowCount = this.getSlideshowPhotos(photos).length;
+    this.openSlideshowBtn.disabled = slideshowCount === 0;
+    this.slideshowAvailability.textContent = slideshowCount
+      ? `${slideshowCount} photos available. Locked photos are excluded.`
+      : "No unlocked photos in the current results.";
     this.updateSortAvailability();
     this.renderCityFilters();
     this.renderTagFilter();
@@ -1068,6 +1098,75 @@ class GalleryApp {
     this.sortSelect.setAttribute("aria-label", isRecentlyViewed ? "Sort disabled" : "Sort photos");
     this.sortSelect.setAttribute("aria-describedby", isRecentlyViewed ? "recentlyViewedOrderMessage" : "");
     this.recentlyViewedOrderMessage.classList.toggle("hidden", !isRecentlyViewed);
+  }
+
+  getSlideshowPhotos(photos = this.getFilteredPhotos()) {
+    return photos.filter(photo => !photo.isPrivate || this.unlockedPhotoIds.has(photo.id));
+  }
+
+  openSlideshow() {
+    this.pauseSlideshow();
+    this.slideshowPhotoIds = this.getSlideshowPhotos().map(photo => photo.id);
+    this.slideshowIndex = 0;
+    if (!this.slideshowPhotoIds.length) return;
+    this.renderSlideshow();
+    this.showModal(this.slideshowModal);
+  }
+
+  renderSlideshow() {
+    const photo = this.photos.find(item => item.id === this.slideshowPhotoIds[this.slideshowIndex]);
+    if (!photo || (photo.isPrivate && !this.unlockedPhotoIds.has(photo.id))) {
+      this.hideModal(this.slideshowModal);
+      return;
+    }
+    this.slideshowImg.src = photo.imageUrl;
+    this.slideshowImg.alt = photo.title;
+    this.slideshowCaption.textContent = `${this.slideshowIndex + 1} of ${this.slideshowPhotoIds.length}: ${photo.title} by ${photo.author}`;
+    const singlePhoto = this.slideshowPhotoIds.length < 2;
+    this.slideshowPreviousBtn.disabled = singlePhoto;
+    this.slideshowNextBtn.disabled = singlePhoto;
+    this.slideshowPlayPauseBtn.disabled = singlePhoto;
+  }
+
+  moveSlideshow(direction, automatic = false) {
+    if (this.slideshowModal.classList.contains("hidden") || this.slideshowPhotoIds.length < 2) return;
+    if (!automatic) this.pauseSlideshow();
+    this.slideshowIndex = (this.slideshowIndex + direction + this.slideshowPhotoIds.length) % this.slideshowPhotoIds.length;
+    this.renderSlideshow();
+  }
+
+  toggleSlideshowPlayback() {
+    if (this.slideshowTimer !== null) {
+      this.pauseSlideshow();
+      return;
+    }
+    if (this.slideshowModal.classList.contains("hidden") || this.slideshowPhotoIds.length < 2 || document.hidden) return;
+    this.slideshowCaption.setAttribute("aria-live", "off");
+    this.slideshowPlayPauseLabel.textContent = "Pause";
+    this.slideshowPlayPauseBtn.setAttribute("aria-label", "Pause slideshow");
+    this.slideshowPlayPauseIcon.className = "fa-solid fa-pause";
+    this.slideshowTimer = setInterval(() => this.moveSlideshow(1, true), 5000);
+  }
+
+  pauseSlideshow() {
+    clearInterval(this.slideshowTimer);
+    this.slideshowTimer = null;
+    this.slideshowCaption.setAttribute("aria-live", "polite");
+    this.slideshowPlayPauseLabel.textContent = "Play";
+    this.slideshowPlayPauseBtn.setAttribute("aria-label", "Play slideshow");
+    this.slideshowPlayPauseIcon.className = "fa-solid fa-play";
+  }
+
+  handleSlideshowKeydown(e) {
+    if (this.slideshowModal.classList.contains("hidden") || e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (e.target.closest("input, textarea, select, [contenteditable]")) return;
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      e.preventDefault();
+      this.moveSlideshow(e.key === "ArrowLeft" ? -1 : 1);
+    } else if (e.key === " " && !e.target.closest("button, a")) {
+      e.preventDefault();
+      if (!e.repeat) this.toggleSlideshowPlayback();
+    }
   }
 
   createCardHTML(photo) {
@@ -1399,6 +1498,11 @@ class GalleryApp {
   }
 
   hideModal(modal) {
+    if (modal === this.slideshowModal) {
+      this.pauseSlideshow();
+      this.slideshowPhotoIds = [];
+      this.slideshowImg.removeAttribute("src");
+    }
     modal.classList.add("hidden");
     document.body.style.overflow = "";
     if (modal === this.detailModal) {
